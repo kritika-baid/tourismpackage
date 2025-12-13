@@ -3,23 +3,23 @@ import pandas as pd
 from huggingface_hub import hf_hub_download
 import joblib
 
-# ------------------ CONFIG ------------------
+# ---------------- CONFIG ----------------
 MODEL_REPO = "kritika25/tourismmodel"
 MODEL_FILE = "best_model.joblib"
 
 st.set_page_config(
-    page_title="Tourism Conversion Predictor",
+    page_title="Tourism Package Conversion Predictor",
     page_icon="🌍",
     layout="centered"
 )
 
 st.title("🌍 Tourism Package Conversion Prediction")
 st.markdown(
-    "Predict whether a customer is **likely to purchase a tourism package** "
+    "Predict whether a customer is likely to purchase a tourism package "
     "based on their profile and interaction details."
 )
 
-# ------------------ LOAD MODEL ------------------
+# ---------------- LOAD MODEL ----------------
 model_path = hf_hub_download(
     repo_id=MODEL_REPO,
     filename=MODEL_FILE,
@@ -27,49 +27,47 @@ model_path = hf_hub_download(
 )
 model = joblib.load(model_path)
 
-# ------------------ GET EXPECTED FEATURES ------------------
+# ---------------- GET FEATURES ----------------
 preprocessor = model.named_steps.get("columntransformer") or model.named_steps.get("preprocessor")
 numeric_cols = list(preprocessor.transformers_[0][2])
 categorical_cols = list(preprocessor.transformers_[1][2])
+expected_cols = numeric_cols + categorical_cols
 
-# ------------------ SIDEBAR INPUT ------------------
+# ---------------- UI DEFINITIONS ----------------
+DROPDOWNS = {
+    "Gender": ["Female", "Male"],
+    "TypeofContact": ["Self Enquiry", "Company Invited"],
+    "Occupation": ["Salaried", "Small Business", "Free Lancer"],
+    "ProductPitched": ["Basic", "Standard", "Deluxe"],
+    "MaritalStatus": ["Single", "Married", "Divorced", "Unmarried"],
+    "Designation": ["Executive", "Manager", "Senior Manager"],
+    "CityTier": [1, 2, 3],
+    "PreferredPropertyStar": [1, 2, 3, 4, 5],
+    "PitchSatisfactionScore": [1, 2, 3, 4, 5],
+    "Passport": [0, 1],
+    "OwnCar": [0, 1],
+}
+
+# ---------------- INPUTS ----------------
 st.sidebar.header("Customer Information")
 input_data = {}
 
-# ---------- Numeric Inputs (NO HARD MAX) ----------
-for col in numeric_cols:
-    input_data[col] = st.sidebar.number_input(
-        label=col,
-        min_value=0,
-        value=0,
-        step=1
-    )
-
-# ---------- Categorical Inputs ----------
-CATEGORICAL_OPTIONS = {
-    "Gender": ["Female", "Male"],
-    "MaritalStatus": ["Single", "Married", "Divorced", "Unmarried", "Unknown"],
-    "TypeofContact": ["Self Enquiry", "Company Invited", "Unknown"],
-    "Occupation": ["Salaried", "Small Business", "Free Lancer", "Unknown"],
-    "ProductPitched": ["Basic", "Standard", "Deluxe", "Unknown"],
-    "Designation": ["Executive", "Manager", "Senior Manager", "Unknown"],
-}
-
-for col in categorical_cols:
-    options = CATEGORICAL_OPTIONS.get(col, ["Unknown"])
-    input_data[col] = st.sidebar.selectbox(col, options)
+for col in expected_cols:
+    if col in DROPDOWNS:
+        input_data[col] = st.sidebar.selectbox(col, DROPDOWNS[col])
+    else:
+        input_data[col] = st.sidebar.number_input(col, min_value=0, value=0, step=1)
 
 input_df = pd.DataFrame([input_data])
 
-# ------------------ PREDICTION ------------------
+# ---------------- PREDICTION ----------------
 st.markdown("---")
 
 if st.button("Predict Conversion"):
     prediction = model.predict(input_df)[0]
     probability = model.predict_proba(input_df)[0][1]
 
-    st.subheader("Prediction Result")
     if prediction == 1:
-        st.success(f"✅ Customer is likely to purchase the package\n\nProbability: {probability:.2%}")
+        st.success(f" Customer is likely to purchase the package\n\nProbability: {probability:.2%}")
     else:
-        st.error(f"❌ Customer is unlikely to purchase the package\n\nProbability: {probability:.2%}")
+        st.error(f" Customer is unlikely to purchase the package\n\nProbability: {probability:.2%}")
