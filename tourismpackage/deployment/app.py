@@ -27,7 +27,23 @@ model_path = hf_hub_download(
 )
 
 model = joblib.load(model_path)
-FEATURES = list(model.feature_names_in_)
+FEATURES = [
+    "Age",
+    "CityTier",
+    "DurationOfPitch",
+    "Gender",
+    "MaritalStatus",
+    "NumberOfPersonVisiting",
+    "NumberOfFollowups",
+    "ProductPitched",
+    "PreferredPropertyStar",
+    "NumberOfTrips",
+    "Passport",
+    "PitchSatisfactionScore",
+    "OwnCar",
+    "Designation",
+    "MonthlyIncome"
+]
 
 # ------------------ SIDEBAR INPUT ------------------
 st.sidebar.header("🧾 Customer Information")
@@ -35,30 +51,42 @@ st.sidebar.header("🧾 Customer Information")
 def user_input():
     data = {}
 
-    st.sidebar.subheader("👤 Personal Details")
-    data["Age"] = st.sidebar.slider("Age", 18, 80, 30)
+    data["Age"] = st.sidebar.number_input("Age", 18, 90, 30)
+    data["CityTier"] = st.sidebar.selectbox("City Tier", [1, 2, 3])
+    data["DurationOfPitch"] = st.sidebar.number_input("Duration Of Pitch", 0, 60, 10)
     data["Gender"] = st.sidebar.selectbox("Gender", ["Male", "Female"])
     data["MaritalStatus"] = st.sidebar.selectbox(
         "Marital Status", ["Single", "Married", "Divorced"]
     )
-
-    st.sidebar.subheader("🌆 Location & Travel")
-    data["CityTier"] = st.sidebar.selectbox("City Tier", [1, 2, 3])
-    data["NumberOfTrips"] = st.sidebar.slider("Number of Trips", 0, 20, 2)
-    data["Passport"] = st.sidebar.selectbox("Has Passport?", ["No", "Yes"])
-
-    st.sidebar.subheader("📞 Sales Interaction")
-    data["DurationOfPitch"] = st.sidebar.slider("Pitch Duration (mins)", 0, 60, 10)
-    data["NumberOfFollowups"] = st.sidebar.slider("Follow-ups", 0, 10, 2)
+    data["NumberOfPersonVisiting"] = st.sidebar.number_input(
+        "Number Of Persons Visiting", 1, 10, 2
+    )
+    data["NumberOfFollowups"] = st.sidebar.number_input(
+        "Number Of Follow-ups", 0, 10, 2
+    )
+    data["ProductPitched"] = st.sidebar.selectbox(
+        "Product Pitched", ["Basic", "Standard", "Deluxe", "Super Deluxe"]
+    )
+    data["PreferredPropertyStar"] = st.sidebar.selectbox(
+        "Preferred Property Star", [3, 4, 5]
+    )
+    data["NumberOfTrips"] = st.sidebar.number_input(
+        "Number Of Trips", 0, 20, 1
+    )
+    data["Passport"] = st.sidebar.selectbox("Passport", [0, 1])
     data["PitchSatisfactionScore"] = st.sidebar.selectbox(
         "Pitch Satisfaction Score", [1, 2, 3, 4, 5]
     )
-
-    st.sidebar.subheader("💰 Financial Details")
-    data["MonthlyIncome"] = st.sidebar.number_input(
-        "Monthly Income", min_value=5000, max_value=300000, value=50000
+    data["OwnCar"] = st.sidebar.selectbox("Own Car", [0, 1])
+    data["Designation"] = st.sidebar.selectbox(
+        "Designation", ["Executive", "Manager", "Senior Manager", "AVP", "VP"]
     )
-    data["OwnCar"] = st.sidebar.selectbox("Owns a Car?", ["No", "Yes"])
+    data["MonthlyIncome"] = st.sidebar.number_input(
+        "Monthly Income", 5000, 300000, 50000
+    )
+
+    return pd.DataFrame([data])
+
 
     # ------------------ ENCODING ------------------
     data["Gender"] = 1 if data["Gender"] == "Male" else 0
